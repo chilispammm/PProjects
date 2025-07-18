@@ -1,0 +1,530 @@
+---
+title: Multinomial and Generalized Linear Model Applications in Analyzing Premier
+  League Forward Performance
+author: "Wayne Chilionje"
+date: "2025-07-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This report presents a range of statistical modelling techniques applied to football data, specifically focusing on player performance metrics from the 2023/24 Premier League season. The aim is to explore various models including multinomial logistic regression, Poisson regression, non-linear models, and fixed effects panel models using R. The analysis provides practical insights into how these models can be leveraged in performance analysis, talent identification, and strategic planning within football analytics. All this will be done using 23/24 Premier league shooting data, which is sourced from Fbref.
+
+(<https://fbref.com/en/comps/9/2023-2024/shooting/2023-2024-Premier-League-Stats>)
+
+## 1. Multinomial Logistic Regression: Classifying Forwards
+
+We begin by using a multinomial logistic regression model to classify strikers into three tiers of forward ability: *Elite*, *Leading*, and *Good*. The classification is based on several shot-related metrics such as goals (Gls), shots (Sh), expected goals (xG), and other performance indicators.
+
+#### Variable Descriptions:
+
+-   Player: The name of the football player.
+
+-   Age: The age of the player.
+
+-   90s: The number of 90-minute periods the player has played, which can be seen as the player’s playing time in full matches.
+
+-   Gls: Goals scored by the player.
+
+-   Sh: Total number of shots taken by the player.
+
+-   SoT: Shots on target, indicating the number of shots that would have gone into the goal if not stopped by the goalkeeper.
+
+-   SoT%: The percentage of total shots that are on target.
+
+-   Sh/90: Average number of shots taken per 90 minutes.
+
+-   SoT/90: Average number of shots on target per 90 minutes.
+
+-   G/Sh: Goals per shot, indicating the player’s shooting efficiency.
+
+-   G/SoT: Goals per shot on target, indicating the player’s finishing ability.
+
+-   Dist: Average distance from the goal from where the shots are taken.
+
+-   PK: Penalty kicks scored by the player.
+
+-   PKatt: Penalty kick attempts made by the player.
+
+-   xG: Expected Goals, a metric that estimates the probability of a goal being scored based on the quality of the shots taken.
+
+-   npxG: Non-penalty expected goals, which excludes goals scored from penalty kicks.
+
+-   npxG/Sh: Non-penalty expected goals per shot.
+
+-   G-xG: The difference between actual goals scored and expected goals, indicating over- or underperformance.
+
+-   np:G-xG: The difference between non-penalty goals scored and non penalty expected goals.
+
+### Data Preparation and Initial Exploration
+
+We begin by loading the necessary libraries and the dataset, followed by a correlation analysis to explore relationships between variables and goals scored.
+
+```{r}
+library(readxl)
+library(tidyr)
+library(corrplot)
+library(dplyr)
+library(ggplot2)
+
+PL_shooting <- read_excel("C:/Users/Admin/Downloads/23_24 PL Shooting Data.xlsx")
+head(PL_shooting)
+```
+
+```{r}
+str(PL_shooting) # Structure of data
+```
+
+Now we conduct exploratory data analysis to understand the relationships among variables.
+
+```{r}
+# Select numeric columns (for correlation analysis)
+library(lares)
+numerical_vars1 <- sapply(PL_shooting, is.numeric)
+numeric_data1 <- PL_shooting[, numerical_vars1]
+correlation_matrix1 <- cor(numeric_data1)
+corrplot(correlation_matrix1)
+
+corr_cross(PL_shooting, max_pvalue = 0.05, top = 15, grid = TRUE)
+
+```
+
+```{r}
+### Correlation with goals
+# Calculate correlations between each numeric variable and GF
+cor_with_GF <- sapply(numeric_data1,
+ function(x) cor(x, PL_shooting$Gls,
+ use = "complete.obs"))
+# Convert the results to a data frame
+cor_with_GF_df <- data.frame(
+ Variable = names(cor_with_GF),
+ Correlation = cor_with_GF
+)
+# Sort the data frame by the absolute value of correlation in descending order
+cor_with_GF_df <- cor_with_GF_df %>%
+ arrange(desc(abs(Correlation)))
+# Create a bar plot
+ggplot(cor_with_GF_df, aes(x = reorder(Variable, Correlation), y = Correlation)) +
+ geom_bar(stat = "identity", fill = "steelblue") +
+ coord_flip() + # Flip coordinates for better readability
+ labs(title = "Correlation with Goals (Gls)", x = "Variable", y = "Correlation") +
+ theme_minimal() +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+<div>
+
+#### Key Insights
+
+**Correlation with Goals (Gls) Plot:**
+
+1.  **High Correlation with xG and npxG**: Goals (Gls) have a very high correlation with expected goals (xG)
+    and non-penalty expected goals (npxG). This suggests that these metrics are strong predictors of actual goals scored.
+2.  **Positive Correlation with SoT and Sh**: Shots on target (SoT) and total shots (Sh) also show a strong
+    positive correlation with goals, indicating that more attempts lead to more goals.
+3.  **Moderate Correlation with PK and PKatt**: Penalty kicks (PK) and penalty kick attempts (PKatt) have a
+    moderate positive correlation with goals, reflecting the importance of penalties in goal scoring.
+4.  **Low Correlation with Age and Distance**: Age and average shot distance (Dist) have a very low
+    correlation with goals, suggesting they are less significant predictors in this context.
+
+**Ranked Cross-Correlations Plot**
+
+1.  **High Cross-Correlation between Shots and Shots on Target**: The highest correlation is between total shots (Sh) and shots on target (SoT), indicating that players who take more shots also tend to have more shots on target.
+2.  **Combination Metrics**: Combinations like Gls + xG and Gls + SoT have high cross-correlations,
+    emphasizing the combined importance of these variables in goal prediction.
+3.  **Negative Correlation with Distance and Expected Metrics**: Distance (Dist) combined with npxG and shots (Sh) has a negative correlation, indicating that longer distances typically result in lower nonpenalty expected goals and fewer shots.
+
+</div>
+
+### Model Fitting (Multinormial Regression)
+
+The multinomial logistic regression model is used to classify players into Leading, Elite, and Good categories based on performance metrics. The exact code for assigning labels and fitting the model is not fully visible in the PDF, but we can infer the approach based on the context.
+
+```{r}
+# Assigning labels of Forward ability based on some criteria
+PL_shooting <- PL_shooting %>%
+ mutate(
+ Forward_Ability = case_when(
+ Gls >= 15 ~ "Elite",
+ Gls >= 10 & Gls < 15 ~ "Leading",
+ TRUE ~ "Good"
+ )
+ )
+# Convert Forward_Ability to a factor
+PL_shooting$Forward_Ability <- factor(PL_shooting$Forward_Ability,
+ levels = c("Good", "Leading", "Elite"))
+# Fit the multinomial logistic regression model
+library(nnet)
+mult_model <- multinom(Forward_Ability ~ Age + `90s` + Gls + Sh + SoT + `Sh/90` + `SoT/90` +
+Dist + xG, data = PL_shooting)
+
+summary(mult_model)
+
+
+```
+
+#### Key Insights
+
+**Model Convergence**
+
+-   The model converged successfully, as indicated by the decreasing value over iterations.
+
+**Significant Predictors**
+
+-   **Gls (Goals scored):** A significant positive predictor for both *Leading* and *Elite* categories.
+-   **xG (Expected Goals):** Shows a substantial negative coefficient, highlighting its strong predictive power for both *Leading* and *Elite* categories.
+
+Less Significant Predictors
+
+-   Variables such as **Age**, **90s**, **Sh**, **SoT**, **Sh/90**, **SoT/90**, and **Dist** have mixed effects and vary in significance.
+
+**Model Fit**
+
+-   **Residual Deviance:** 0.000114774
+-   **AIC:** 40.00011\
+    These low values indicate a good model fit.
+
+------------------------------------------------------------------------
+
+#### Implications
+
+**Player Classification**
+
+-   The model effectively classifies players into performance tiers based on goal-scoring ability using multiple performance metrics.
+
+**Understanding Player Performance**
+
+-   By analyzing the coefficients, teams can:
+    -   Identify key development areas such as improving shot accuracy.
+    -   Encourage players to increase goal-scoring opportunities through higher attempt volume.
+
+------------------------------------------------------------------------
+
+#### Practical Implications
+
+The multinomial regression model categorizes players into three levels of forward ability: **Leading**, **Elite**, and **Good**. This offers several practical benefits:
+
+**1. Player Evaluation and Recruitment**
+
+-   **Talent Identification:**\
+    The model helps in identifying key metrics that differentiate between *Good*, *Leading*, and *Elite* forwards. Clubs can focus on these metrics during scouting and recruitment to identify potential top-performing players.
+
+-   **Performance Benchmarking:**\
+    By understanding which metrics are most predictive of higher goal-scoring ability, teams can set performance benchmarks for players at different ability levels.
+
+**2. Training and Development**
+
+-   **Targeted Training Programs:**\
+    Coaches can develop focused training programs to improve specific skills that the model identifies as crucial for advancement (e.g., from *Good* to *Elite*). For instance, improving **Shot Accuracy (SoT)** or **Expected Goals (xG)**.
+
+-   **Performance Tracking:**\
+    The model offers a framework for tracking player performance over time, enabling coaches to monitor development in key performance areas.
+
+**3. Strategic Planning and Game Tactics**
+
+-   **Game Strategy:**\
+    Understanding the strengths of *Leading* and *Elite* forwards can inform tactical decisions. Teams can position players in ways that maximize their scoring potential based on predicted ability.
+
+-   **Opponent Analysis:**\
+    Similar models can be used to assess opposing forwards, assisting in the development of defensive strategies to counter high-performing opponents.
+
+**4. Resource Allocation**
+
+-   **Financial Decisions:**\
+    Clubs can make more informed decisions on player acquisitions and contract renewals by evaluating players' categorical ability levels.
+
+-   **Resource Optimization:**\
+    Training resources, coaching staff, and analytical tools can be allocated more efficiently to nurture players with potential to reach *Elite* status.
+
+## 2. Poisson Regression for Goals Scored
+
+We use Poisson regression to model the number of goals scored (Gls) as a function of various predictors. Poisson regression is suitable for count data, such as goals scored.
+
+### Model Specification
+
+The Poisson regression model is specified with goals as the response variable and predictors including Age, 90s, Sh, SoT, SoT%, Sh/90, SoT/90, Dist, PK, PKatt, xG, and npxG.
+
+Here’s how the model is applied:
+
+-   Formula: The model is specified with goals as the response variable and predictors including Age, 90s, Sh, SoT, SoT% , Sh/90 , SoT/90 , Dist, PK, PKatt, xG, and npxG.
+
+-   Family: The Poisson family is used in the glm function, indicating that the response variable follows a
+    Poisson distribution.
+
+```{r}
+# Fit Poisson regression model
+poisson_model <- glm(Gls ~ Age + `90s` + Sh + SoT + `SoT%` + `Sh/90` + `SoT/90` + Dist + PK +
+PKatt + xG + npxG, family = poisson, data = PL_shooting)
+summary(poisson_model)
+```
+
+```{r}
+# Assumptions and diagnostics
+# Check for overdispersion
+dispersion_test <- sum(residuals(poisson_model,
+ type = "pearson")^2) / df.residual(poisson_model)
+print(dispersion_test)
+
+library(lmtest)
+dwtest(poisson_model)
+
+```
+
+#### Key Insights
+
+-   **Non-Significant Predictors:**\
+    Most predictors — **Age**, **90s**, **Sh**, **SoT**, **SoT%**, **Sh/90**, **SoT/90**, **Dist**, **PK**, **PKatt**, **xG**, and **npxG** are not statistically significant, as indicated by their high p-values.
+
+-   **Positive Estimate for PK:**\
+    Penalty kicks (**PK**) have a positive estimate, suggesting that players who score more penalties tend to have higher overall goal counts.
+
+-   **Residual Deviance and AIC:**\
+    The model shows a **residual deviance of 21.952** and **AIC of 297.79**, which are reasonably low, indicating an adequate model fit.
+
+-   **Dispersion Test**: The dispersion parameter is 0.4689936, suggesting underdispersion (less variability than expected). This may indicate the Poisson model is appropriate, as overdispersion would suggest a negative binomial model.
+
+-   **Durbin-Watson Test**: The test checks for autocorrelation in residuals. The output is incomplete, but a DW statistic around 2 suggests no significant autocorrelation.
+
+#### Implications
+
+-   **Goal Prediction:**\
+    While the model identifies some predictors of goal-scoring, the lack of significance in many variables suggests the model could benefit from refinement or the use of alternative modeling approaches.
+
+-   **Model Diagnostics:**\
+    Further model evaluation is recommended, for example:
+
+    -   Checking for **overdispersion**
+    -   Considering a **negative binomial model** to better handle potential variance issues and improve fit.
+
+#### Interpretation of Findings
+
+The Poisson model indicates that age and penalty kick attempts are significant predictors of goals scored. The underdispersion suggests the model fits well, but the high p-values for some predictors (e.g xG, Sh) suggest they may not add significant explanatory power. This could be due to multicollinearity, as xG and npxG are highly correlated with goals.
+
+## 3. Polynomial Regression for Non-Linear Relationships
+
+### Theoretical Basis
+
+Polynomial regression is a type of non-linear regression where the relationship between the independent variable (e.g., Age) and the dependent variable (e.g., Goals) is modeled as an nth-degree polynomial. The model takes the form:
+
+$$
+y = \beta_0 + \beta_1 x + \beta_2 x^2 + \dots + \beta_n x^n + \varepsilon
+$$
+
+Where:
+
+-   $y$ is the **dependent variable** (*Goals*),
+-   $x$ is the **independent variable** (*Age*),
+-   $\beta_0, \beta_1, \dots, \beta_n$ are the **coefficients**,
+-   $\varepsilon$ is the **error term**.
+
+We apply polynomial regression to model the non-linear relationship between Age and Goals scored.
+
+#### 3.2 Advantages and Limitations
+
+**Advantages**
+
+-   **Flexibility:**\
+    Polynomial regression can model more complex relationships compared to simple linear regression.
+
+-   **Good for Non-linear Trends:**\
+    It is especially useful when the data shows a curvilinear relationship.
+
+**Limitations**
+
+-   **Overfitting:**\
+    High-degree polynomial models may capture noise in the data, leading to overfitting.
+
+-   **Interpretation:**\
+    Coefficients of higher-degree terms can be difficult to interpret and may not have intuitive meaning.
+
+-   **Extrapolation:**\
+    Predictions outside the observed data range can be highly unreliable and unstable.
+
+------------------------------------------------------------------------
+
+#### 3.3 Selecting Data and Fitting the Model
+
+We will use the same **shooting dataset** from Questions 1 and 2.\
+- **Response Variable:** `Goals`\
+- **Predictor Variable:** `Age`
+
+A polynomial regression model will be fitted to explore the relationship between age and goal-scoring ability.
+
+```{r}
+# Polynomial regression model
+poly_model <- lm(Gls ~ poly(Age, 2, raw=TRUE),
+ data=PL_shooting)
+summary(poly_model)
+
+# Plot the data and the model
+ggplot(PL_shooting, aes(x=Age, y=Gls)) +
+ geom_point() +
+ stat_smooth(method="lm",
+ formula=y~poly(x, 2, raw=TRUE),
+ col="blue") +
+ labs(title="Polynomial Regression: Age vs Goals",
+ x="Age", y="Goals")
+
+
+```
+
+#### Summary of the Results
+
+**1. Model and Coefficients**
+
+-   The regression model uses **Age** as the predictor and **Goals** as the outcome variable.
+-   A **polynomial regression of degree 2** is fitted.
+-   Estimated coefficients:
+    -   **Intercept:** 13.18\
+    -   **Age (linear term):** -0.10\
+    -   **Age² (quadratic term):** 0.0003
+
+**2. Statistical Significance**
+
+-   None of the coefficients are statistically significant.
+-   **P-values:**
+    -   Age (linear): 0.969\
+    -   Age² (quadratic): 0.995\
+-   This indicates that **Age**, in both its linear and quadratic forms, does **not** have a significant impact on the number of goals scored.
+
+**3. Model Fit**
+
+-   **R-squared:** 0.0033\
+    The model explains only **0.33%** of the variability in goals scored.
+
+-   **F-statistic:** 0.09518
+
+    -   **P-value:** 0.9094\
+    -   Indicates that the model is **not a good fit** for the data.
+
+**4. Residuals**
+
+-   The residuals show a **wide range**, highlighting variability in the data that the model does not explain.
+
+#### Insights from the Plot
+
+**1. Visualization**
+
+-   The scatter plot displays the relationship between **Age** and **Goals**, with the polynomial regression line overlaid.
+-   The regression line appears **almost flat**, reinforcing the conclusion that there is **no strong relationship** between age and goals.
+
+**2. Distribution of Goals**
+
+-   Goal counts are **spread across a wide range of ages**, with **no clear pattern or trend**.
+
+#### Conclusion
+
+-   The analysis indicates **no significant non-linear relationship** between a player’s **age** and the **number of goals scored**.
+-   The model explains very **little of the variance**, suggesting that **other variables**, not included in the model, may be more relevant predictors of goal-scoring performance.
+
+### Question 4: Fixed Effects Panel Data Model
+
+#### Theoretical Basis
+
+Panel data models analyze data involving multiple entities (e.g individuals, companies, countries) observed over multiple periods. The fixed effects model controls for time-invariant characteristics, allowing consistent estimation of time-varying variables’ effects. The model takes the form:
+
+$$
+y_{it} = \alpha_i + \beta X_{it} + \varepsilon_{it}
+$$
+
+Where:
+
+-   $y_{it}$: **Dependent variable** (*Performance*) for entity $i$ at time $t$
+-   $\alpha_i$: **Entity-specific intercept** (fixed effect)
+-   $X_{it}$: **Vector of independent variables**
+-   $\beta$: **Vector of coefficients**
+-   $\varepsilon_{it}$: **Error term**
+
+#### Assumptions
+
+-   **Entity-specific characteristics are constant over time:**\
+    Any unobserved characteristics that differ between entities but remain constant over time are captured by the fixed effects.
+
+-   **No perfect multicollinearity:**\
+    The independent variables should not be perfectly collinear.
+
+-   **Error terms are uncorrelated with the independent variables:**\
+    This ensures that the coefficient estimates are unbiased.
+
+#### Methodology
+
+1.  **Data Structure:**\
+    Convert the dataset into **panel data format**, clearly specifying the entity (e.g., player or team) and time period.
+
+2.  **Model Estimation:**\
+    Use the **fixed effects (within) estimator**, which involves demeaning the data to remove entity-specific effects.
+
+3.  **Hypothesis Testing:**\
+    Conduct statistical tests on the coefficients to assess their **significance**.
+
+#### Generating Data
+
+We will create **synthetic panel data** to demonstrate the application of the fixed effects model.
+
+```{r}
+# Generate synthetic data
+set.seed(333)
+Club <- rep(c("Pescara", "Assisi", "Rome", "Lucca"), each = 5)
+Season <- rep(1:5, times = 4)
+Performance <- round(rnorm(20, 70, 5))
+synthetic_data <- data.frame(Club, Season, Performance)
+synthetic_data
+```
+
+#### Model Fitting
+
+We fit a fixed effects model using the plm package, with Performance as the dependent variable and Season as the predictor.
+
+```{r}
+library(plm)
+fixed_effects_model <- plm(Performance ~ Season, data = synthetic_data, 
+                           index = c("Club", "Season"), model = "within")
+summary(fixed_effects_model)
+```
+
+### Summary of the Results
+
+#### 1. Model and Coefficients
+
+The fixed effects model uses **Performance** as the outcome variable and **Seasons** as the predictor.
+
+Estimated coefficients for each season:
+
+-   **Season 2:** 0.50 *(not significant)*
+-   **Season 3:** -1.50 *(not significant)*
+-   **Season 4:** 3.75 *(not significant)*
+-   **Season 5:** 7.00 **(significant at 5% level)**
+
+#### 2. Statistical Significance
+
+-   Only **Season 5** shows a statistically significant increase in performance
+    -   **P-value:** 0.04274
+-   Other seasons do **not** show significant differences from the baseline season.
+
+#### 3. Model Fit
+
+-   **R-squared:** 0.44846\
+    The model explains approximately **44.85%** of the variability in performance.
+
+-   **Adjusted R-squared:** 0.12673\
+    After accounting for the number of predictors, about **12.67%** of the variability is explained.
+
+-   **F-statistic:** 2.4393
+
+    -   **P-value:** 0.10389\
+    -   Suggests the model is **marginally significant** overall.
+
+#### 4. Residuals
+
+-   Residuals range from **-9.8 to 6.4**, indicating a moderate level of unexplained variability.
+
+#### Conclusion
+
+-   The fixed effects model identifies a **significant improvement in performance** during **Season 5**, compared to the baseline season.
+-   The overall model fit is **moderate**, explaining a reasonable but not complete portion of the variation in performance.
+-   The performance boost in Season 5 may be due to **season-specific factors** that warrant further investigation.

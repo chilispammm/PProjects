@@ -1,0 +1,17 @@
+[build]
+  command = "echo 'Static site built successfully'"
+  publish = "."
+
+[context.production.environment]
+  NODE_ENV = "production"
+
+[context.deploy-preview]
+  command = "echo 'Deploy preview built successfully'"
+
+[context.branch-deploy]
+  command = "echo 'Branch deploy built successfully'"
+
+[[redirects]]
+  from = "/*"
+  to = "/Regression-techniques-in-football.html"
+  status = 200
