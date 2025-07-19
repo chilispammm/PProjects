@@ -3,7 +3,7 @@ title: Multinomial and Generalized Linear Model Applications in Analyzing Premie
   League Forward Performance
 author: "Wayne Chilionje"
 date: "2025-07-16"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
