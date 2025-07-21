@@ -71,7 +71,7 @@ library(corrplot)
 library(dplyr)
 library(ggplot2)
 
-PL_shooting <- read_excel("C:/Users/Admin/Downloads/23_24 PL Shooting Data.xlsx")
+PL_shooting <- read_excel("files/23_24 PL Shooting Data.xlsx")
 head(PL_shooting)
 ```
 
@@ -123,20 +123,15 @@ ggplot(cor_with_GF_df, aes(x = reorder(Variable, Correlation), y = Correlation))
 
 **Correlation with Goals (Gls) Plot:**
 
-1.  **High Correlation with xG and npxG**: Goals (Gls) have a very high correlation with expected goals (xG)
-    and non-penalty expected goals (npxG). This suggests that these metrics are strong predictors of actual goals scored.
-2.  **Positive Correlation with SoT and Sh**: Shots on target (SoT) and total shots (Sh) also show a strong
-    positive correlation with goals, indicating that more attempts lead to more goals.
-3.  **Moderate Correlation with PK and PKatt**: Penalty kicks (PK) and penalty kick attempts (PKatt) have a
-    moderate positive correlation with goals, reflecting the importance of penalties in goal scoring.
-4.  **Low Correlation with Age and Distance**: Age and average shot distance (Dist) have a very low
-    correlation with goals, suggesting they are less significant predictors in this context.
+1.  **High Correlation with xG and npxG**: Goals (Gls) have a very high correlation with expected goals (xG) and non-penalty expected goals (npxG). This suggests that these metrics are strong predictors of actual goals scored.
+2.  **Positive Correlation with SoT and Sh**: Shots on target (SoT) and total shots (Sh) also show a strong positive correlation with goals, indicating that more attempts lead to more goals.
+3.  **Moderate Correlation with PK and PKatt**: Penalty kicks (PK) and penalty kick attempts (PKatt) have a moderate positive correlation with goals, reflecting the importance of penalties in goal scoring.
+4.  **Low Correlation with Age and Distance**: Age and average shot distance (Dist) have a very low correlation with goals, suggesting they are less significant predictors in this context.
 
 **Ranked Cross-Correlations Plot**
 
 1.  **High Cross-Correlation between Shots and Shots on Target**: The highest correlation is between total shots (Sh) and shots on target (SoT), indicating that players who take more shots also tend to have more shots on target.
-2.  **Combination Metrics**: Combinations like Gls + xG and Gls + SoT have high cross-correlations,
-    emphasizing the combined importance of these variables in goal prediction.
+2.  **Combination Metrics**: Combinations like Gls + xG and Gls + SoT have high cross-correlations, emphasizing the combined importance of these variables in goal prediction.
 3.  **Negative Correlation with Distance and Expected Metrics**: Distance (Dist) combined with npxG and shots (Sh) has a negative correlation, indicating that longer distances typically result in lower nonpenalty expected goals and fewer shots.
 
 </div>
@@ -253,8 +248,7 @@ Here’s how the model is applied:
 
 -   Formula: The model is specified with goals as the response variable and predictors including Age, 90s, Sh, SoT, SoT% , Sh/90 , SoT/90 , Dist, PK, PKatt, xG, and npxG.
 
--   Family: The Poisson family is used in the glm function, indicating that the response variable follows a
-    Poisson distribution.
+-   Family: The Poisson family is used in the glm function, indicating that the response variable follows a Poisson distribution.
 
 ```{r}
 # Fit Poisson regression model

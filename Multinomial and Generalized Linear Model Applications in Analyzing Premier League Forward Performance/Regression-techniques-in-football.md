@@ -105,7 +105,7 @@ library(dplyr)
 ``` r
 library(ggplot2)
 
-PL_shooting <- read_excel("C:/Users/Admin/Downloads/23_24 PL Shooting Data.xlsx")
+PL_shooting <- read_excel("files/23_24 PL Shooting Data.xlsx")
 head(PL_shooting)
 ```
 
