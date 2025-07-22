@@ -1,0 +1,549 @@
+---
+title: 'Analyzing Manchester United Goals: A Comparison of Generalized Linear Models
+  for Count Data'
+author: "Wayne Chilionje"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Comparative Analysis of Count Models and Clustering Techniques Using Manchester United 2023/24 Passing Data
+
+## Introduction
+
+This analysis explores Manchester United's performance in the 2023/24 season, focusing on passing statistics, goals scored (GF), goals against (GA), expected goals (xG), and other advanced metrics. We apply count models (Log-linear, Poisson, Quasi-Poisson, Negative Binomial) and clustering techniques (Linear Mixed-Effects Models, Hierarchical Clustering) to understand the relationships between variables and identify patterns in the data. All this will be done using Manchester United Passing Data of their 23/24 season in the Premier League, which is sourced from fbref.
+
+[Manchester United 2023-2024 Passing Match Logs - Premier League](https://fbref.com/en/squads/19538871/2023-2024/matchlogs/c9/passing/Manchester-United-Match-Logs-Premier-League)
+
+The variables in question include:
+
+1.  **Round**: The round of the competition in which the match was played.
+2.  **Day**: The day of the week when the match took place.
+3.  **Venue**: The stadium or location where the match was held.
+4.  **Result**: The outcome of the match.
+5.  **GF**: Goals For; the number of goals scored by the team.
+6.  **GA**: Goals Against; the number of goals conceded by the team.
+7.  **Opponent**: The opposing team in the match.
+8.  **Cmp**: Passes Completed; the number of successful passes made by the team.
+9.  **Att**: Passes Attempted; the total number of passes attempted by the team.
+10. **Cmp%**: Pass Completion Percentage; the ratio of completed passes to attempted passes.
+11. **TotDist**: Total Distance; the total distance covered by the team during the match.
+12. **PrgDist**: Progressive Distance; the total distance covered by the team in actions that move the ball towards the opponent’s goal.
+13. **Ast**: Assists; the number of assists by players on the team.
+14. **xAG**: Expected Assists (Goals); a metric estimating the number of assists a player or team should have based on the quality of the pass.
+15. **xA**: Expected Assists; similar to xAG, focusing on the expected goal value of passes made.
+16. **KP**: Key Passes; passes that directly lead to a shot on goal.
+17. **Final_3rd_passes**: Passes completed in the final third of the field, indicating attacking involvement.
+18. **PPA**: Passes into the Penalty Area; the number of passes played into the opponent’s penalty area.
+19. **CrsPA**: Crosses into the Penalty Area; the number of crosses delivered into the opponent’s penalty area.
+20. **PrgP**: Progressive Passes; passes that significantly advance the ball towards the opponent’s goal.
+21. **xG**: Expected Goals; a metric that estimates the likelihood of a shot resulting in a goal. It provides a measure of the quality of scoring chances created by a team or player.
+
+## Data Loading and Preparation
+
+Here, we simply want read the dataset and ensure that the data is clean and ready for analysis.
+
+```{r}
+# Loading our data
+# Loading required libraries
+library(dplyr) # for data manipulation
+library(ggplot2) # for visualization
+library(MASS) # for Negative Binomial model
+library(lme4) # for Linear Mixed-Effects Models
+library(dendextend) # for hierarchical clustering
+library(readxl) # for reading the excel data
+mufc_data <- read_excel("C:/Users/Admin/Downloads/MUFC 23_24 Passing Data Cleaned.xlsx")
+head(mufc_data)
+
+```
+
+```{r}
+str(mufc_data)
+```
+
+### Data Cleaning
+
+We can see that the variables need to be formatted made into the right format, namely `Date` , `Round` , `Day` , `Venue` , `Result` and `Opponent` .
+
+```{r}
+# Clean and convert data types
+data = mufc_data
+data_cleaned <- data %>%
+ # Convert Date to Date type
+ mutate(Date = as.Date(Date)) %>%
+ # Convert categorical variables to factors
+ mutate(Round = as.factor(Round),
+ Day = as.factor(Day),
+ Venue = as.factor(Venue),
+ Result = as.factor(Result),
+ Opponent = as.factor(Opponent))
+# Inspect the cleaned data
+str(data_cleaned)
+
+
+```
+
+-   Data cleaning is now complete. The data is ready for some EDA, which should give us a an quick understanding of key characteristics, patterns, and relationships present within the dataset.
+
+## Exploratory Data Analysis
+
+```{r}
+summary(data_cleaned)
+```
+
+### Match Data and Results
+
+-   **Matches**: Span from August 2023 to May 2024, with 19 home and 19 away games (38 total).
+-   **Results**: 18 wins, 14 losses, 6 draws.
+
+### Goals
+
+-   **Goals For (GF)**: Range from 0 to 4, average 1.5 goals per match.
+-   **Goals Against (GA)**: Range from 0 to 4, average 1.526 goals, indicating competitive matches.
+
+### Passing Statistics
+
+-   **Completed Passes (Cmp)**: Range from 224 to 688, with an average completion percentage (Cmp%) of 80.11%.
+-   **Total Distance (TotDist)**: Ranges from 4,029 to 11,227 meters, reflecting variability in play style or opponent difficulty.
+
+### Advanced Metrics
+
+-   **Expected Assists (xA)**: Range from 0.2 to 2.1.
+-   **Expected Goals (xG)**: Range from 0.2 to 4.1.
+-   **Key Passes (KP)**: Average 11.42 per game, range from 3 to 24, showing playmaking variability.
+
+### Labels with High Variance
+
+-   **GF and GA**: High dispersion due to range from 0 to 4.
+-   **Cmp and Att**: Indicate variability in passing performance.
+
+### Visualizations
+
+```{r}
+# 1. Goals For by Round
+# 1. Goals For by Round
+ggplot(data_cleaned, aes(x = Round, y = GF)) +
+ geom_bar(stat = "identity", fill = 'red') +
+ labs(title = "Goals Against by Round", x = "Round", y = "Goals Against") +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+```{r}
+# 2. Goals For & Goals Against at Home
+home_data <- data_cleaned %>% filter(Venue == "Home")
+ggplot(home_data, aes(x = Round, y = GF, fill = "Goals For")) +
+ geom_bar(stat = "identity", position = "dodge") +
+ geom_bar(aes(y = GA, fill = "Goals Against"), stat = "identity", position = "dodge") +
+ labs(title = "Goals For & Goals Against at Home", x = "Round", y = "Goals") +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+```
+
+```{r}
+# 3. Goals For & Goals Against Away
+away_data <- data_cleaned %>% filter(Venue == "Away")
+ggplot(away_data, aes(x = Round, y = GF, fill = "Goals For")) +
+ geom_bar(stat = "identity", position = "dodge") +
+ geom_bar(aes(y = GA, fill = "Goals Against"), stat = "identity", position = "dodge") +
+ labs(title = "Goals For & Goals Against Away", x = "Round", y = "Goals") +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+```{r}
+# 4. Expected Goals (xG) vs Round
+ggplot(data_cleaned, aes(x = Round, y = xG)) +
+ geom_line(group = 1, color = 'blue') +
+ labs(title = "Expected Goals (xG) vs Round", x = "Round", y = "Expected Goals") +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+```{r}
+# 7. Top 5 Goals For vs Opponent
+top5_GF <- data_cleaned %>%
+ arrange(desc(GF)) %>%
+ head(5)
+ggplot(top5_GF, aes(x = reorder(Opponent, -GF), y = GF, fill = Opponent)) +
+ geom_bar(stat = "identity") +
+ labs(title = "Top 5 Goals For vs Opponent", x = "Opponent", y = "Goals For") +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+```{r}
+# 8. Top 5 Goals Against vs Opponent
+top5_GA <- data_cleaned %>%
+ arrange(desc(GA)) %>%
+ head(5)
+ggplot(top5_GA, aes(x = reorder(Opponent, -GA), y = GA, fill = Opponent)) +
+ geom_bar(stat = "identity") +
+ labs(title = "Top 5 Goals Against vs Opponent", x = "Opponent", y = "Goals Against") +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+```
+
+```{r}
+# 9. Top 5 and Bottom 5 Key Passes (KP) vs Opponent
+top5_KP <- data_cleaned %>%
+ arrange(desc(KP)) %>%
+ head(5)
+bottom5_KP <- data_cleaned %>%
+ arrange(KP) %>%
+ head(5)
+top_bottom_KP <- rbind(top5_KP, bottom5_KP)
+ggplot(top_bottom_KP, aes(x = reorder(Opponent, -KP), y = KP, fill = Opponent)) +
+ geom_bar(stat = "identity") +
+ labs(title = "Top 5 and Bottom 5 Key Passes (KP) vs Opponent", x = "Opponent", y = "Key Pas
+ses") +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+```{r}
+# 10. Result vs Venue
+ggplot(data_cleaned, aes(x = Venue, fill = Result)) +
+ geom_bar(position = "dodge") +
+ labs(title = "Result vs Venue", x = "Venue", y = "Count")
+
+```
+
+```{r}
+# 11. Result vs Day
+ggplot(data_cleaned, aes(x = Day, fill = Result)) +
+ geom_bar(position = "dodge") +
+ labs(title = "Result vs Day", x = "Day", y = "Count")
+
+```
+
+#### Key Insights
+
+-   **Matches**: Span from August 2023 to May 2024, with 19 home and 19 away games (38 total).
+-   **Results**: 18 wins, 14 losses, 6 draws.
+
+### Goals
+
+-   **Goals For (GF)**: Range from 0 to 4, average 1.5 goals per match.
+-   **Goals Against (GA)**: Range from 0 to 4, average 1.526 goals, indicating competitive matches.
+
+### Passing Statistics
+
+-   **Completed Passes (Cmp)**: Range from 224 to 688, with an average completion percentage (Cmp%) of 80.11%.
+-   **Total Distance (TotDist)**: Ranges from 4,029 to 11,227 meters, reflecting variability in play style or opponent difficulty.
+
+### Advanced Metrics
+
+-   **Expected Assists (xA)**: Range from 0.2 to 2.1.
+-   **Expected Goals (xG)**: Range from 0.2 to 4.1.
+-   **Key Passes (KP)**: Average 11.42 per game, range from 3 to 24, showing playmaking variability.
+
+### Labels with High Variance
+
+-   **GF and GA**: High dispersion due to range from 0 to 4.
+-   **Cmp and Att**: Indicate variability in passing performance.
+
+### Correlation Analysis
+
+```{r}
+library(corrplot)
+# Select numeric columns
+numerical_vars <- sapply(data_cleaned, is.numeric)
+numeric_data <- data_cleaned[, numerical_vars]
+# Correlation matrix
+correlation_matrix <- cor(numeric_data, use = "complete.obs")
+correlation_matrix
+```
+
+```{r}
+corrplot(correlation_matrix)
+
+```
+
+```{r}
+library(lares)
+corr_cross(data_cleaned, max_pvalue = 0.05, top = 15, grid = TRUE)
+
+```
+
+### Key Insights: Correlation Analysis
+
+This section summarizes key correlations observed between various performance metrics for Manchester United.
+
+### Goals For (GF):
+
+-   **Ast (0.839)**: A strong positive correlation with assists, indicating that more assists are associated with more goals scored.
+-   **xG (0.478)**: A moderate positive correlation with expected goals, suggesting a significant relationship between the quality of scoring chances and actual goals scored.
+-   **xAG (0.386)** and **xA (0.258)**: Moderate positive correlations, indicating the contributions of expected assisted goals and expected assists to scoring.
+
+### Goals Against (GA):
+
+-   **Cmp (0.097)**, **Att (0.070)**, and **Cmp% (0.207)**: Low positive correlations with passing metrics, suggesting that these factors have a minor relationship with the number of goals conceded.
+-   **TotDist (0.094)**: A low positive correlation, indicating a weak association between the total distance covered and goals conceded.
+
+### Passing Metrics (Cmp, Att, Cmp%):
+
+-   **Cmp and Att (0.994)**: Almost perfect correlation, indicating that the total number of completed passes (Cmp) and attempted passes (Att) are nearly identical.
+-   **Cmp and Cmp% (0.817)**: High positive correlation, suggesting that higher pass accuracy is associated with more completed passes.
+-   **TotDist (0.976)**: Strong correlation with both Cmp and Att, indicating that teams covering more distance tend to make more passes.
+
+### Progressive Metrics (PrgDist, PrgP):
+
+-   **PrgDist and TotDist (0.850)**: High correlation, indicating that teams covering more total distance also cover more progressive distance.
+-   **PrgP and TotDist (0.820)**: Strong positive correlation, suggesting that teams covering more distance also make more progressive passes.
+
+### Expected Goals and Assists (xG, xA, xAG):
+
+-   **xG and xAG (0.906)**: Very high correlation, indicating that expected goals are strongly related to expected assisted goals.
+-   **xA and xAG (0.754)**: High correlation, suggesting a significant relationship between expected assists and expected assisted goals.
+
+### Crossing and Passing into Penalty Area (CrsPA, PPA):
+
+-   **CrsPA and PPA (0.592)**: Moderate positive correlation, indicating that crosses into the penalty area are somewhat related to passing into the penalty area.
+-   **PPA and PrgP (0.805)**: High correlation, suggesting that progressive passes often lead to passes into the penalty area.
+
+```{r}
+# Calculate correlations between each numeric variable and GF
+cor_with_GF <- sapply(numeric_data,
+ function(x) cor(x, data_cleaned$GF, use = "complete.obs"))
+# Convert the results to a data frame
+cor_with_GF_df <- data.frame(
+ Variable = names(cor_with_GF),
+ Correlation = cor_with_GF
+)
+# Sort the data frame by the absolute value of correlation in descending order
+cor_with_GF_df <- cor_with_GF_df %>%
+ arrange(desc(abs(Correlation)))
+# Create a bar plot
+ggplot(cor_with_GF_df, aes(x = reorder(Variable, Correlation), y = Correlation)) +
+ geom_bar(stat = "identity", fill = "steelblue") +
+ coord_flip() + # Flip coordinates for better readability
+ labs(title = "Correlation with Goals For (GF)", x = "Variable", y = "Correlation") +
+ theme_minimal() +
+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### Key Insights: 
+
+This section provides deeper interpretations of the observed correlations and their implications for Manchester United's performance.
+
+### High Correlation with Assists (Ast):
+
+-   The strong positive correlation between assists (**Ast**) and goals (**GF**) underscores the importance of teamwork and passing in setting up scoring opportunities. Players who frequently assist are crucial in increasing the team’s goal tally.
+
+### Significant Role of Expected Goals (xG):
+
+-   The notable correlation between expected goals (**xG**) and actual goals indicates that the quality of scoring chances created is a good predictor of goal-scoring success. This metric can help in evaluating the efficiency of a team’s attack.
+
+### Influence of Expected Assisted Goals (xAG) and Expected Assists (xA):
+
+-   The positive correlations of **xAG** and **xA** with **GF** suggest that players who are expected to contribute to goals, either by assisting or creating goal-scoring opportunities, play a vital role in the team’s offensive output.
+
+### Moderate Contribution of Key Passes (KP) and Crosses into the Penalty Area (CrsPA):
+
+-   Key passes (**KP**) and crosses into the penalty area (**CrsPA**) have moderate positive correlations with goals, highlighting the importance of creative and accurate passing in dangerous areas of the field.
+
+### Passing Accuracy (Cmp%) and Passing in the Final Third:
+
+-   Passing accuracy (**Cmp%**) and passes into the final third of the pitch (**Final_3rd_passes**, assuming this is the variable) show some correlation with goals, indicating that maintaining possession and effective ball distribution in attacking areas can contribute to scoring.
+
+### Negligible Correlation with Progressive Passes (PrgP) and Total Distance (TotDist):
+
+-   The low correlation of progressive passes (**PrgP**) and total distance covered (**TotDist**) with goals suggests that these metrics may not directly influence scoring outcomes. This implies that merely moving the ball forward or covering more distance does not necessarily lead to more goals.
+
+------------------------------------------------------------------------
+
+## 1.2 Model Fitting
+
+For the Log-linear, Poisson, Negative Binomial, and Quasi-Poisson models, the following variable choices will be used:
+
+-   **Response Variable**: **GF** (Goals For)
+-   **Explanatory Variables**: Based on the correlation plot insights, we will use the following predictors: **xG**, **xAG**, **KP**, **PrgP**, **CrsPA**, **Ast**.
+
+```{r}
+library(MASS)
+# Log-linear model (using GLM with log link)
+log_linear_model <- glm(GF ~ Ast + xG + xAG + xA + KP + CrsPA,
+ family = poisson(link = "log"),
+data = data_cleaned)
+# Fit Poisson model
+poisson_model <- glm(GF ~ Ast + xG + xAG + xA + KP + CrsPA,
+ data = data_cleaned, family = poisson)
+# Fit Quasi-Poisson model
+quasi_poisson_model <- glm(GF ~ Ast + xG + xAG + xA + KP + CrsPA,
+ data = data_cleaned, family = quasipoisson)
+# Fit Negative Binomial model
+neg_binomial_model <- glm.nb(GF ~ Ast + xG + xAG + xA + KP + CrsPA,
+ data = data_cleaned)
+
+summary(log_linear_model)
+summary(poisson_model)
+summary(quasi_poisson_model)
+summary(neg_binomial_model)
+
+```
+
+### Key Insights: Generalized Linear Models (GLM)
+
+This section details the various Generalized Linear Models (GLMs) fitted to the data and interprets their results.
+
+### Model Descriptions:
+
+### Log-Linear Model (GLM with Log Link):
+
+-   This model uses the Poisson distribution with a log link function. It’s employed to model count data and predict the number of goals (**GF**) as a function of the given predictors. The log link ensures the predicted values are positive.
+
+### Poisson Model:
+
+-   A standard Poisson regression model is used, which assumes the mean and variance of the response variable (**GF**) are equal. This model is appropriate for count data where the occurrence of events (goals) is counted.
+
+### Quasi-Poisson Model:
+
+-   This model is similar to the Poisson model but accounts for overdispersion, where the variance of the response variable (**GF**) is greater than the mean. It adjusts the standard errors accordingly.
+
+### Negative Binomial Model:
+
+-   The Negative Binomial model also handles overdispersion in count data. It is similar to the Poisson model but includes an additional parameter to account for extra variability in the data.
+
+### Results:
+
+### Significant Predictors:
+
+-   Across all models, **Assists (Ast)** has a **significant positive association** with the number of goals scored (**GF**), as indicated by a positive coefficient and a very low p-value (p \< 0.001). This suggests that an increase in assists is strongly associated with an increase in goals scored.
+
+### Marginal Predictors:
+
+-   **Expected Goals (xG)** shows a positive coefficient with **marginal significance** in the Poisson and Negative Binomial models (p $\approx$ 0.08). This indicates a possible positive relationship between **xG** and **GF**, though the evidence is not strong enough to confirm significance at the traditional 0.05 level.
+-   **Expected Assisted Goals (xAG)** has a negative coefficient, but it is **not statistically significant** in any of the models, suggesting no clear relationship with the number of goals scored.
+
+### Non-Significant Predictors:
+
+-   **Expected Assists (xA)**, **Key Passes (KP)**, and **Crosses into the Penalty Area (CrsPA)** are **not statistically significant** in any model, indicating that these variables do not have a significant association with the number of goals scored in this dataset.
+
+### Model Comparison:
+
+-   The Poisson and Negative Binomial models have the same coefficient estimates, standard errors, and significance levels, indicating consistent results across these models.
+-   The Quasi-Poisson model shows slightly different standard errors due to the adjustment for overdispersion, but the overall interpretation remains consistent with the other models.
+
+### Model Fit:
+
+-   The Residual Deviance and AIC (Akaike Information Criterion) values indicate the models’ goodness-of-fit. Lower values suggest a better fit. However, the exact choice of the best model should also consider the nature of the data (presence of overdispersion).
+
+### Dispersion Parameter:
+
+-   The Quasi-Poisson model has a dispersion parameter less than 1, indicating potential **underdispersion**. The Negative Binomial model’s very high theta value suggests the data may closely follow a Poisson distribution.
+
+------------------------------------------------------------------------
+
+## Non-Parametric Regression Analysis
+
+Using appropriate statistical data, we will perform non-parametric regression analysis using the LOESS (Locally Estimated Scatterplot Smoothing) technique and interpret its output.
+
+Non-parametric regression techniques like LOESS can be useful for capturing complex relationships between variables without assuming a specific functional form. Given the insights from the correlation analysis, we will use **xG (Expected Goals)** as the predictor and **GF (Goals For)** as the response variable. This choice is logical because **xG** is a strong predictor of actual goals scored (**GF**).
+
+```{r}
+# Fit the LOESS model
+loess_model <- loess(GF ~ xG, data = data_cleaned, span = 0.75) # span controls the smoothing parameter
+summary(loess_model)
+```
+
+```{r}
+# Create predictions
+data_cleaned$loess_pred <- predict(loess_model, data_cleaned$xG)
+# Plot the results
+ggplot(data_cleaned, aes(x = xG, y = GF)) +
+ geom_point(color = "blue", alpha = 0.6) + # Observed data points
+ geom_line(aes(y = loess_pred), color = "red", size = 1) + # LOESS fit
+ labs(title = "LOESS Regression of Goals For (GF) on Expected Goals (xG)",
+ x = "Expected Goals (xG)",
+ y = "Goals For (GF)") +
+ theme_minimal()
+
+```
+
+### Key Insights: LOESS Regression
+
+This section provides interpretations of the non-parametric regression analysis using the LOESS model for Expected Goals (xG) and Goals For (GF).
+
+-   **Non-Linear Relationship**: The LOESS model reveals a non-linear relationship between Expected Goals (**xG**) and Goals For (**GF**). This indicates that the conversion rate of chances (**xG**) into actual goals (**GF**) varies depending on the range of **xG**.
+-   **Initial Increase**: There is an initial positive correlation between **xG** and **GF**, suggesting that as the quality and quantity of scoring chances improve, the actual goals scored increase as well.
+-   **Variability at Mid-Range xG**: Around **xG** values of 1.5 to 2, there is variability in actual goals scored, indicating potential inefficiency in finishing or inconsistency in converting good scoring opportunities into goals.
+-   **Plateau Effect**: At higher **xG** values (above 2), the curve plateaus, suggesting that additional increases in **xG** do not correspond to a proportional increase in goals scored. This could imply a limit to the efficiency of scoring or defensive adjustments that prevent goals.
+-   **Performance Insight**: The fluctuations and plateau in the curve highlight areas where the team may struggle to consistently convert high-quality chances into goals, indicating potential areas for tactical adjustments or improvements in finishing quality.
+
+------------------------------------------------------------------------
+
+## Analysis of Clustered Observations
+
+Using appropriate statistical data, we will perform two analyses that can be used for observations clustered within groups and interpret their output.
+
+To analyze observations that are clustered within groups, we can consider hierarchical data structures or repeated measures. Two appropriate statistical methods for such analyses are:
+
+1.  **Linear Mixed-Effects Models (LMM)**: These models can handle data where observations are clustered within groups.
+2.  **Hierarchical Clustering Analysis**: This method helps to identify clusters within the data and can be used to find natural groupings of observations.
+
+### Linear Mixed-Effects Models (LMM)
+
+We’ll fit a linear mixed-effects model to account for the clustering of observations within groups. Here, we’ll use **GF (Goals For)** as the response variable and **Ast (Assists)**, **xG (Expected Goals)**, and **xA (Expected Assists)** as predictors. We’ll consider **Opponent** as a random effect to account for clustering by opponent.
+
+```{r}
+library(lme4)
+library(lmerTest)
+# Fit the linear mixed-effects model
+lmm_model <- lmer(GF ~ Ast + xG + xA + (1 | Opponent), data = data_cleaned)
+
+# Summary of the model
+summary(lmm_model)
+
+```
+
+### Linear Mixed-Effects Model (LMM) Results
+
+This section presents the fitted Linear Mixed-Effects Model and its key insights.
+
+### Model Formula:
+
+`GF ~ Ast + xG + xA + (1 | Opponent)`
+
+### Key Insights:
+
+### Random Effects:
+
+-   **Opponent (Intercept)**: The variance for **Opponent** is reported as 0.0000 with a standard deviation of 0.000. This indicates that there is **no variability in GF attributable to differences between opponents** in this dataset. This might suggest that the opponent effect is negligible or could indicate a boundary issue in the model fitting (where the true variance is very close to zero).
+-   **Residual Variance**: The residual variance is 0.3295 with a standard deviation of 0.574, indicating the variability in **GF** not explained by the fixed effects and random effects.
+
+### Fixed Effects:
+
+-   **Intercept**: The intercept is 0.1960 with a p-value of 0.366. This suggests that the baseline value of **GF** when all predictors are zero is **not significantly different from zero**.
+-   **Ast (Assists)**: The coefficient is 0.9789 with a **p-value \< 0.001**. This strong positive significance indicates that an increase in assists is **strongly associated with an increase in goals scored (GF)**. The high t-value (9.265) confirms the strong relationship.
+-   **xG (Expected Goals)**: The coefficient is 0.4568 with a **p-value of 0.002**. This indicates a **positive relationship between expected goals and actual goals scored**. The result is statistically significant, suggesting that higher expected goals correlate with more goals scored.
+-   **xA (Expected Assists)**: The coefficient is -0.3336 with a p-value of 0.208. This suggests that **xA is not a significant predictor of GF** in this model. The negative sign indicates a slight inverse relationship, but it is not statistically significant.
+
+### Correlation of Fixed Effects:
+
+-   The correlations between the fixed effects indicate the degree to which these predictors are linearly related. For example, **xG** and **xA** have a strong negative correlation of -0.633, suggesting that these predictors might be **somewhat collinear**.
+
+### Model Fit:
+
+-   The **REML criterion** is 70.8, which provides a measure of model fit. Lower values typically indicate better model fit, but it should be interpreted relative to other models.
+
+## Key Takeaways
+
+This analysis of Manchester United's 2023/24 Premier League season provides a comprehensive understanding of the team's performance through count models, non-parametric regression, and clustering techniques. Below are the key insights derived from the study:
+
+1.  **Assists as a Primary Driver of Goals**: Across all generalized linear models (Log-linear, Poisson, Quasi-Poisson, Negative Binomial) and the linear mixed-effects model, assists (Ast) consistently showed a strong, statistically significant positive association with goals scored (GF, p \< 0.001). This underscores the critical role of playmaking and teamwork in driving Manchester United's goal-scoring output, suggesting that strategies to enhance assist opportunities could directly improve scoring efficiency.
+
+2.  **Expected Goals (xG) as a Reliable Predictor**: Expected goals (xG) demonstrated a significant positive relationship with goals scored (GF) in both the GLMs (p ≈ 0.08 in Poisson/Negative Binomial, p = 0.002 in LMM), highlighting its utility as a predictor of scoring outcomes. The LOESS regression further revealed a non-linear relationship, with a plateau at higher xG values (\>2), indicating potential inefficiencies in converting high-quality chances into goals, possibly due to finishing inconsistencies or strong opposition defenses.
+
+3.  **Limited Impact of Other Advanced Metrics**: Metrics such as expected assists (xA), expected assisted goals (xAG), key passes (KP), and crosses into the penalty area (CrsPA) showed weak or non-significant associations with goals scored across all models. This suggests that while these metrics contribute to attacking play, they are less directly tied to goal outcomes compared to assists and xG, potentially pointing to tactical areas for refinement.
+
+4.  **Passing Metrics and Game Dynamics**: The high correlations between completed passes (Cmp), attempted passes (Att, r = 0.994), total distance (TotDist, r = 0.976), and progressive metrics (PrgDist, PrgP) indicate that Manchester United's passing game is closely tied to overall movement and progressive play. However, these metrics showed negligible correlation with goals scored, suggesting that possession and movement alone do not guarantee scoring success without effective chance creation.
+
+5.  **Opponent Clustering Not Significant**: The linear mixed-effects model revealed negligible variance in goals scored attributable to opponents (random effect variance ≈ 0), suggesting that opponent-specific effects had minimal impact on Manchester United's goal-scoring performance. This could imply consistent performance across different opponents or limitations in the model's ability to detect opponent-driven variability.
+
+6.  **Tactical and Performance Implications**: The plateau in the LOESS curve at higher xG values and the variability in mid-range xG (1.5–2) highlight potential inefficiencies in finishing, particularly in matches with moderate to high-quality chances. Combined with the strong influence of assists, this suggests that Manchester United could benefit from targeted improvements in striker finishing and playmaker coordination to maximize goal output from created opportunities.
+
+7.  **Season Overview**: The balanced distribution of results (18 wins, 14 losses, 6 draws) and competitive goal averages (GF: 1.5, GA: 1.526) reflect a season of closely contested matches. Visualizations, such as top/bottom key passes and goals for/against by opponent, highlight variability in performance, with specific opponents exposing strengths or weaknesses in Manchester United's attacking and defensive strategies.
+
+These insights collectively suggest that Manchester United's offensive performance in the 2023/24 season was heavily reliant on effective assist creation and chance quality (xG), with room for improvement in converting high-quality opportunities. Tactical adjustments focusing on enhancing finishing efficiency and leveraging playmaking could further elevate the team's scoring potential.
