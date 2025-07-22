@@ -1,8 +1,7 @@
 Multinomial and Generalized Linear Model Applications in Analyzing
 Premier League Forward Performance
 ================
-Wayne Chilionje
-2025-07-16
+
 
 ## Introduction
 
