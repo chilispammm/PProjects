@@ -1,54 +1,72 @@
-# Data Science Projects
+# Football Analytics Portfolio
 
-Welcome to my collection of data science and machine learning projects. This repository showcases my work in various domains of data science, including machine learning, computer vision, and natural language processing.
+Welcome to my collection of football analytics projects. This repository showcases my work in football data analysis, focusing on Premier League performance metrics, statistical modeling, and data visualization.
 
-## Project Categories
+## Featured Projects
 
-### Machine Learning & Statistics
-- [Linear Regression](./linear-regression): Predict car prices using linear models
-- [ANOVA Test](./anova-test): Statistical analysis of car data
-- [Stock Price Evolution](./stock-price-evolution): Time series analysis of stock prices
+### 1. Manchester United 2023/24 Season Analysis
+📊 **GLM Analysis of MUFC Goals with Passing Data**  
+[View Analysis](./GLMs%20to%20analyze%20MUFC%20Goals%20with%20Passing%20data/GLMs-in-MUFC-shot-analysis.md)
+- Applied Generalized Linear Models (Poisson, Quasi-Poisson, Negative Binomial) to analyze goal-scoring patterns
+- Investigated relationships between passing metrics, xG, and actual goals scored
+- Visualized key performance indicators and match outcomes
+- Identified strengths and areas for improvement in Manchester United's attacking play
 
-### Natural Language Processing
-- [N-gram Language Modeling](./ngram-language-modeling): Implement language models with n-gram techniques
-- [Email Spam Classification](./email-spam-classification): Machine learning models for spam detection
-- [Amharic Sentiment Analysis](./amharic-sentiment-analysis): Sentiment analysis for Amharic language
+### 2. Premier League Forward Performance Analysis
+[View Analysis](./Multinomial%20and%20Generalized%20Linear%20Model%20Applications%20in%20Analyzing%20Premier%20League%20Forward%20Performance/Regression-techniques-in-football.md)
+- Multinomial and generalized linear models for forward performance evaluation
+- Analysis of goal scoring patterns and shot conversion rates
+- Expected Goals (xG) and non-penalty goal analysis
+- Performance comparison across different playing positions
 
-### Computer Vision
-- [Wildlife Image Classification](./wildlife-image-classification): CNN-based classification of wildlife images
-- [Eliteserien Football Detection](./eliteserien-football-detection): Object detection in football videos
-- [Road Cracks Detection](./road-cracks-detection): Unsupervised learning for road crack detection
+## Technical Approach
 
-### Data Collection & Automation
-- [Job Scraping](./job-scraping): Automated job data collection from websites
+### Statistical Modeling
+- **Generalized Linear Models (GLMs)**: For count data analysis of goals and assists
+- **Multinomial Regression**: For categorical outcome prediction
+- **Mixed-Effects Models**: Accounting for team and opponent variability
+- **Time Series Analysis**: Tracking performance trends across the season
 
-## Setup Instructions
+### Data Visualization
+- Interactive plots for performance metrics
+- Heatmaps of shot locations and passing networks
+- Comparative analysis of actual vs. expected performance
+
+## Data Sources
+- [FBref](https://fbref.com/): Premier League match and player statistics
+- [Understat](https://understat.com/): Advanced metrics including xG and xA
+- [WhoScored](https://www.whoscored.com/): Player ratings and match statistics
+
+## Getting Started
+
+### Prerequisites
+- R (≥ 4.0.0)
+- RStudio (recommended)
+- Required R packages: tidyverse, lme4, MASS, ggplot2, performance
+
+### Installation
 
 1. Clone the repository:
 ```bash
 git clone https://github.com/chilispammm/PProjects.git
 ```
 
-2. Navigate to the project directory:
-```bash
-cd PProjects/DataProjects/[project-name]
+2. Open the R Markdown (`.Rmd`) file in RStudio
+3. Install required packages:
+```r
+install.packages(c("tidyverse", "lme4", "MASS", "ggplot2", "performance"))
 ```
-
-3. Install dependencies (if applicable):
-```bash
-pip install -r requirements.txt
-```
-
-4. Run the notebook:
-```bash
-jupyter notebook
-```
+4. Click "Knit" to reproduce the analysis
 
 ## Project Status
-- ✅ Complete
-- 🚧 In Progress
-- 🔍 Research Phase
-- 📝 Planning
+- ✅ Manchester United 2023/24 Analysis - Complete
+- ✅ Premier League Forward Performance - Complete
+- 📊 Additional team analyses - Planned
+
+## Key Findings
+- Strong correlation between key passes and goal-scoring outcomes
+- Significant impact of xG on match results
+- Identified patterns in team performance against different opposition styles
 
 ## License
 
