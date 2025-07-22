@@ -59,5 +59,5 @@ Wayne Chilionje
 
 ## Acknowledgments
 
-- Data source: Premier League shooting statistics
+- Data source: Fbref
 - Analysis methodology inspired by modern football analytics approaches
