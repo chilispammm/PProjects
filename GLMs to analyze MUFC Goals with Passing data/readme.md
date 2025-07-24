@@ -10,7 +10,6 @@ This repository contains an R Markdown project analyzing Manchester United's per
 
 These methods are used to explore relationships between variables such as goals scored (**GF**), expected goals (**xG**), assists (**Ast**), and various passing statistics. The data is sourced from [FBref](https://fbref.com/en/).
 
-This project is part of an assignment (**STA3010**) by Wayne Chilionje, aimed at understanding team performance through statistical modeling.
 
 ## Repository Contents
 
