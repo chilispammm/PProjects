@@ -1,17 +1,5 @@
 # Data Science & Analytics Portfolio
 
-Welcome to my collection of data science and analytics projects. This repository showcases my work across various domains including sports analytics, natural language processing, computer vision, and statistical modeling.
-
-## Featured Projects
-
-
-### 2. Premier League Forward Performance Analysis
-[View Analysis](./Multinomial%20and%20Generalized%20Linear%20Model%20Applications%20in%20Analyzing%20Premier%20League%20Forward%20Performance/Regression-techniques-in-football.md)
-- Multinomial and generalized linear models for forward performance evaluation
-- Analysis of goal scoring patterns and shot conversion rates
-- Expected Goals (xG) and non-penalty goal analysis
-- Performance comparison across different playing positions
-
 ## Complete Project Portfolio
 
 ### 🚀 Data Science & Machine Learning
