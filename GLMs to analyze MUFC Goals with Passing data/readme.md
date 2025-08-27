@@ -17,54 +17,10 @@ These methods are used to explore relationships between variables such as goals 
 * `MUFC_23_24_Passing_Data_Cleaned.xlsx`: The dataset (not included in the repository; **must be sourced separately**) containing match-level passing and performance metrics for Manchester United's 2023/24 season.
 * `GLMs-in-MUFC-shot-analysis_files/`: Directory containing generated figures (e.g., plots for goals, correlations, LOESS regression) from rendering the R Markdown file.
 
-## Prerequisites
-
-To run the analysis, ensure you have the following installed:
-
-* **R** (version 4.0 or higher)
-* **RStudio** (recommended for rendering R Markdown)
-
-### R Packages:
-
-Install the following R packages:
-
-* `dplyr` (data manipulation)
-* `ggplot2` (visualizations)
-* `MASS` (Negative Binomial model)
-* `lme4` and `lmerTest` (Linear Mixed-Effects Models)
-* `dendextend` (Hierarchical Clustering)
-* `readxl` (reading Excel files)
-* `corrplot` and `lares` (correlation analysis and visualization)
-
 ### Dataset:
 
 Obtain the `MUFC_23_24_Passing_Data_Cleaned.xlsx` file from a reliable source (e.g., [FBref](https://fbref.com/en/squads/19538871/2023-2024/matchlogs/c9/passing/Manchester-United-Match-Logs-Premier-League)) or prepare a dataset with the required variables: `Date`, `Round`, `Day`, `Venue`, `Result`, `GF`, `GA`, `Opponent`, `Cmp`, `Att`, `Cmp%`, `TotDist`, `PrgDist`, `Ast`, `xAG`, `xA`, `KP`, `Final_3rd_passes`, `PPA`, `CrsPA`, `PrgP`, `xG`.
 
-## Installation
-
-1.  **Clone or download this repository:**
-    ```bash
-    git clone <your-repo-url>
-    ```
-2.  **Install the required R packages:**
-    ```R
-    install.packages(c("dplyr", "ggplot2", "MASS", "lme4", "lmerTest", "dendextend", "readxl", "corrplot", "lares"))
-    ```
-3.  **Place the `MUFC_23_24_Passing_Data_Cleaned.xlsx` file** in your R working directory or update the file path in the R Markdown code to match your local setup.
-
-## Usage
-
-1.  Open `manchester_united_analysis_202324.Rmd` in RStudio.
-2.  Ensure the dataset path in the data loading section is correct. For example:
-    ```R
-    mufc_data <- read_excel("path/to/MUFC_23_24_Passing_Data_Cleaned.xlsx")
-    ```
-3.  **Render the R Markdown file** to generate the analysis report and visualizations:
-    ```R
-    library(rmarkdown)
-    render("manchester_united_analysis_202324.Rmd")
-    ```
-    The output will include an HTML or Markdown report with all analyses, plots, and insights, saved in the working directory along with a figures folder (`GLMs-in-MUFC-shot-analysis_files/`).
 
 ## Project Structure
 
