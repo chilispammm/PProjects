@@ -1,16 +1,9 @@
-# Football Analytics Portfolio
+# Data Science & Analytics Portfolio
 
-Welcome to my collection of football analytics projects. This repository showcases my work in football data analysis, focusing on Premier League performance metrics, statistical modeling, and data visualization.
+Welcome to my collection of data science and analytics projects. This repository showcases my work across various domains including sports analytics, natural language processing, computer vision, and statistical modeling.
 
 ## Featured Projects
 
-### 1. Manchester United 2023/24 Season Analysis
-📊 **GLM Analysis of MUFC Goals with Passing Data**  
-[View Analysis](./GLMs%20to%20analyze%20MUFC%20Goals%20with%20Passing%20data/GLMs-in-MUFC-shot-analysis.md)
-- Applied Generalized Linear Models (Poisson, Quasi-Poisson, Negative Binomial) to analyze goal-scoring patterns
-- Investigated relationships between passing metrics, xG, and actual goals scored
-- Visualized key performance indicators and match outcomes
-- Identified strengths and areas for improvement in Manchester United's attacking play
 
 ### 2. Premier League Forward Performance Analysis
 [View Analysis](./Multinomial%20and%20Generalized%20Linear%20Model%20Applications%20in%20Analyzing%20Premier%20League%20Forward%20Performance/Regression-techniques-in-football.md)
@@ -19,55 +12,54 @@ Welcome to my collection of football analytics projects. This repository showcas
 - Expected Goals (xG) and non-penalty goal analysis
 - Performance comparison across different playing positions
 
-## Technical Approach
+## Complete Project Portfolio
 
-### Statistical Modeling
-- **Generalized Linear Models (GLMs)**: For count data analysis of goals and assists
-- **Multinomial Regression**: For categorical outcome prediction
-- **Mixed-Effects Models**: Accounting for team and opponent variability
-- **Time Series Analysis**: Tracking performance trends across the season
+### 🚀 Data Science & Machine Learning
+- **[Amharic Sentiment Analysis](./amharic-sentiment-analysis/)**: NLP project analyzing sentiment in Amharic text using machine learning
+- **[Email Spam Classification](./email-spam-classification/)**: Built and evaluated ML models to classify spam vs. legitimate emails
+- **[N-gram Language Modeling](./ngram-language-modeling/)**: Implemented language models with various smoothing techniques
+- **[Linear Regression](./linear-regression/)**: Comprehensive implementation and analysis of linear regression models
+- **[Stock Price Evolution](./stock-price-evolution/)**: Time series analysis of stock market data
+- **[Automobile Sales Analysis](./mtcars-analysis/)**: Data analysis and visualization of car sales data
 
-### Data Visualization
-- Interactive plots for performance metrics
-- Heatmaps of shot locations and passing networks
-- Comparative analysis of actual vs. expected performance
+### ⚽ Sports Analytics
+- **[Eliteserien Football Detection](./eliteserien-football-detection/)**: Computer vision for player and ball tracking in Norwegian football
+- **[GLMs for MUFC Goals](./GLMs%20to%20analyze%20MUFC%20Goals%20with%20Passing%20data/)**: Advanced statistical analysis of Manchester United's performance
+- **[Premier League Forward Analysis](./Multinomial%20and%20Generalized%20Linear%20Model%20Applications%20in%20Analyzing%20Premier%20League%20Forward%20Performance/)**: Player performance modeling using GLMs
+
+### 🖥️ Computer Vision
+- **[Road Cracks Detection](./road-cracks-detection/)**: Unsupervised learning for detecting road surface damage
+- **[Wildlife Image Classification](./wildlife-image-classification/)**: CNN implementation for species classification
+
+### 🔧 Tools & Utilities
+- **[Job Scraping](./job-scraping/)**: Web scraping tool for collecting job postings
+- **[ANOVA Test](./anova-test/)**: Statistical analysis using Analysis of Variance
+
+## Technical Skills
+
+### Data Analysis & Modeling
+- **Statistical Analysis**: Hypothesis testing, regression analysis, time series
+- **Machine Learning**: Supervised & unsupervised learning, model evaluation
+- **Natural Language Processing**: Text processing, sentiment analysis, language modeling
+- **Computer Vision**: Image classification, object detection
+
+### Tools & Technologies
+- **Languages**: Python, R, SQL
+- **Libraries**: pandas, scikit-learn, TensorFlow, PyTorch, ggplot2
+- **Data Visualization**: Matplotlib, Seaborn, Plotly
+- **Version Control**: Git, GitHub
 
 ## Data Sources
 - [FBref](https://fbref.com/): Premier League match and player statistics
 - [Understat](https://understat.com/): Advanced metrics including xG and xA
 - [WhoScored](https://www.whoscored.com/): Player ratings and match statistics
 
-## Getting Started
-
-### Prerequisites
-- R (≥ 4.0.0)
-- RStudio (recommended)
-- Required R packages: tidyverse, lme4, MASS, ggplot2, performance
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/chilispammm/PProjects.git
-```
-
-2. Open the R Markdown (`.Rmd`) file in RStudio
-3. Install required packages:
-```r
-install.packages(c("tidyverse", "lme4", "MASS", "ggplot2", "performance"))
-```
-4. Click "Knit" to reproduce the analysis
-
 ## Project Status
-- ✅ Manchester United 2023/24 Analysis - Complete
-- ✅ Premier League Forward Performance - Complete
-- 📊 Additional team analyses - Planned
+- ✅ 13 projects completed across multiple domains
+- ✅ Production-ready code with detailed documentation
+- 📊 Continuously adding new projects and improvements
 
-## Key Findings
-- Strong correlation between key passes and goal-scoring outcomes
-- Significant impact of xG on match results
-- Identified patterns in team performance against different opposition styles
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+## Key Findings & Impact
+- Successfully implemented machine learning models with high accuracy across different domains
+- Demonstrated strong skills in data analysis, visualization, and model deployment
+- Projects showcase ability to work with various data types including text, images, and time series data
