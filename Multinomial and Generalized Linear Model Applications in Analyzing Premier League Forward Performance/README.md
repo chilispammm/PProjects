@@ -23,18 +23,6 @@ The analysis is based on Premier League shooting data from the 2023-2024 season,
 - `Regression-techniques-in-football_files/`: Directory containing generated plots and figures
 - `netlify.toml`: Configuration for web deployment
 
-## Requirements
-
-To run this analysis, you will need:
-- R and RStudio
-- Required R packages (installed automatically when running the Rmd file)
-
-## Running the Analysis
-
-1. Clone this repository
-2. Open `Regression techniques in football.Rmd` in RStudio
-3. Click "Knit" to generate the analysis report
-
 ## Project Structure
 
 ```
